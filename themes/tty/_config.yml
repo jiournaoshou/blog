@@ -1,0 +1,54 @@
+# ───────────────────────────────────────────────
+# tty 主题配置
+# 所有字段均可留空，留空即回退到默认值
+# ───────────────────────────────────────────────
+
+# ── 身份 ──────────────────────────────────────
+author: ""            # 留空则使用站点 _config.yml 的 author
+bio: "后端 / 运维 / 偶尔写点前端。喜欢终端、纯文本和可预测的系统。"
+prompt: "~"           # 命令行提示符前缀
+hostname: "localhost"
+
+# ── 首屏终端欢迎屏 ────────────────────────────
+banner: true          # 是否显示首屏 ASCII 字标（由站点 title 自动生成）
+banner_font: "block"   # block | slim | mini
+
+# ── 外观 ──────────────────────────────────────
+theme_color: "#3ddc84"   # 主色
+bg_color: "#0b0d0c"      # 背景色
+text_color: "#c8ccc9"    # 正文色
+font_size: 15px
+line_height: 1.75
+container_width: 760px
+radius: 2px              # 想更硬核就填 0
+
+# ── 功能开关 ──────────────────────────────────
+scanline: false          # CRT 扫描线
+grain: false             # 噪点纹理
+typewriter: false        # 首页打字机效果
+cursor_blink: true
+
+# ── 导航 ──────────────────────────────────────
+menu:
+  文章: /archives/
+  标签: /tags/
+  关于: /about/
+
+# ── 页脚 ──────────────────────────────────────
+footer_text: ""       # 留空则不显示
+since: 2024
+icp: ""               # 备案号，留空不显示
+
+# ── 评论 ──────────────────────────────────────
+comments:
+  provider: ""        # "" | giscus
+  giscus:
+    repo: ""
+    repo_id: ""
+    category: ""
+    category_id: ""
+    mapping: "pathname"
+    theme: "dark_dimmed"
+
+# ── 统计 ──────────────────────────────────────
+analytics_script: ""

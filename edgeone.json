@@ -1,0 +1,6 @@
+{
+  "buildCommand": "pnpm run clean-build",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "outputDirectory": "public",
+  "nodeVersion": "22.11.0"
+}

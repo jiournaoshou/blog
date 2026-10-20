@@ -1,0 +1,12 @@
+<article class="page">
+  <header class="post-head">
+    <nav class="crumbs">
+      <a href="<%- url_for('/') %>">~</a><span class="sep">/</span><span class="cur"><%= page.title %></span>
+    </nav>
+    <h1 class="post-title"><%= page.title %></h1>
+    <% if (page.description) { %><p class="page-desc"><%= page.description %></p><% } %>
+  </header>
+  <div class="prose">
+    <%- page.content %>
+  </div>
+</article>

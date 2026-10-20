@@ -1,0 +1,15 @@
+<section class="taxonomy">
+  <header class="post-head">
+    <nav class="crumbs"><a href="<%- url_for('/') %>">~</a><span class="sep">/</span><span class="cur">tags</span></nav>
+    <h1 class="post-title">标签</h1>
+    <p class="page-desc"><span class="num"><%= site.tags.length %></span> 个标签</p>
+  </header>
+  <div class="chip-cloud">
+  <% site.tags.sort('count', -1).each(function(tag) { %>
+    <a class="cloud-item" href="<%- url_for(tag.path) %>" style="--w:<%= Math.min(3, Math.ceil(tag.length / 12) + 1) %>">
+      <span class="c-name">:<%= tag.name %></span><span class="c-count"><%= tag.length %></span>
+    </a>
+  <% }); %>
+  </div>
+  <% if (!site.tags.length) { %><p class="empty">还没有标签。</p><% } %>
+</section>

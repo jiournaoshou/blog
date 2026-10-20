@@ -1,0 +1,47 @@
+<article class="post" itemscope itemtype="https://schema.org/Article">
+  <header class="post-head">
+    <nav class="crumbs">
+      <a href="<%- url_for('/') %>">~</a><span class="sep">/</span><a href="<%- url_for('/archives/') %>">posts</a><span class="sep">/</span><span class="cur"><%= page.slug || page.path.replace(/\/$/, '').split('/').pop() %></span>
+    </nav>
+    <h1 class="post-title" itemprop="name headline"><%= page.title %></h1>
+    <div class="post-meta">
+      <time datetime="<%= page.date.toISOString() %>" itemprop="datePublished"><%= page.date.format('YYYY-MM-DD HH:mm') %></time>
+      <% if (page.updated && page.updated.format('YYYY-MM-DD') !== page.date.format('YYYY-MM-DD')) { %>
+        <span class="dim">· 更新于 <time datetime="<%= page.updated.toISOString() %>"><%= page.updated.format('YYYY-MM-DD') %></time></span>
+      <% } %>
+      <% if (page.categories.length) { %>
+        <span class="sep">·</span>
+        <% page.categories.each(function(c) { %><a class="chip cat" href="<%- url_for('/categories/' + c.name + '/') %>">#<%= c.name %></a><% }); %>
+      <% } %>
+      <% if (page.tags.length) { %>
+        <span class="sep">·</span>
+        <% page.tags.each(function(t) { %><a class="chip" href="<%- url_for('/tags/' + t.name + '/') %>">:<%= t.name %></a><% }); %>
+      <% } %>
+    </div>
+  </header>
+
+  <% if (page.toc !== false && (page.content.match(/<h[23]/g) || []).length > 3) { %>
+  <details class="toc">
+    <summary>目录</summary>
+    <div class="toc-body"><%- toc(page.content, { list_number: false, max_depth: 3 }) %></div>
+  </details>
+  <% } %>
+
+  <div class="prose" itemprop="articleBody">
+    <%- page.content %>
+  </div>
+
+  <footer class="post-foot">
+    <div class="post-end"><span class="ps1"><%= theme.prompt || '~' %>$</span> EOF<span class="cursor" aria-hidden="true">█</span></div>
+    <nav class="post-nav">
+      <% if (page.prev) { %>
+        <a class="nav-prev" href="<%- url_for(page.prev.path) %>"><span class="k">← 前一篇</span><span class="v"><%= page.prev.title %></span></a>
+      <% } else { %><span class="nav-prev off"><span class="k">← 前一篇</span><span class="v">没有更早的了</span></span><% } %>
+      <% if (page.next) { %>
+        <a class="nav-next" href="<%- url_for(page.next.path) %>"><span class="k">后一篇 →</span><span class="v"><%= page.next.title %></span></a>
+      <% } else { %><span class="nav-next off"><span class="k">后一篇 →</span><span class="v">已经是最新</span></span><% } %>
+    </nav>
+  </footer>
+
+  <%- partial('_partial/comments', { post: page }) %>
+</article>

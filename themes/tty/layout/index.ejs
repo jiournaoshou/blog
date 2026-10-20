@@ -1,0 +1,72 @@
+<%
+/**
+ * 首屏：终端欢迎屏 + 文章列表
+ * 刻意不加“精选卡片”“渐变按钮”“emoji 小标题”这类元素。
+ */
+var artFont = theme.banner_font || 'block';
+
+// 逐字转成方块字标；只覆盖方块点阵能画好的字符，其余一律回退
+var GLYPHS = {
+  A:["█▀█","█▀█"], B:["█▀▄","█▄▀"], C:["█▀▀","█▄▄"], D:["█▀▄","█▄▀"],
+  E:["█▀▀","██▄"], F:["█▀▀","█  "], G:["█▀▀","█▄█"], H:["█ █","█▀█"],
+  I:["█","█"], J:["  █","█▄█"], K:["█▄▀","█ █"], L:["█  ","█▄▄"],
+  M:["█▄█","█ █"], N:["█▄ █","█ ▀█"], O:["█▀█","█▄█"], P:["█▀█","█▀▀"],
+  Q:["█▀█","█▄█"], R:["█▀█","█▀▄"], S:["█▀▀","▄▄█"], T:["▀█▀"," █ "],
+  U:["█ █","█▄█"], V:["█ █","▀▄▀"], W:["█ █","█▄█"], X:["█▄█","█ █"],
+  Y:["█ █"," █ "], Z:["▀▀█","█▄▄"], " ":["",""], ".":["","▄"],
+  "-":["","▀▀▀"], "_":["","▀▀▀"], "/":["  █","█  "], "|":["█","█"]
+};
+
+var titleStr = (config.title || 'geek').toUpperCase();
+var glyphRows = ["", ""];
+var drawable = true;
+for (var gi = 0; gi < titleStr.length; gi++) {
+  var g = GLYPHS[titleStr.charAt(gi)];
+  if (!g) { drawable = false; break; }
+  glyphRows[0] += g[0] + " ";
+  glyphRows[1] += g[1] + " ";
+}
+
+// 画不出方块字（中文标题、标题太长）时，退回到纯文本的 .slim 字标
+var bannerLines = (drawable && titleStr.length <= 10)
+  ? glyphRows
+  : [config.title || 'geek'];
+
+var pageSize = config.per_page || 10;
+var currentPage = page.current || 1;
+var totalPages = page.total || 1;
+%>
+<section class="hero">
+  <% if (theme.banner !== false) { %>
+  <pre class="banner<%- drawable && titleStr.length <= 10 ? '' : ' slim' %>" aria-label="<%= config.title %>"><%- bannerLines.join("\n") %></pre>
+  <% } %>
+  <p class="hero-line">
+    <span class="ps1"><%= theme.prompt || '~' %>$</span> whoami<%
+      var who = theme.author || config.author || 'anonymous';
+    %>
+    <span class="hero-out"<% if (theme.typewriter) { %> data-typing="<%= who %>" data-cursor="1"<% } %>><%= theme.typewriter ? '' : who %></span>
+  </p>
+  <% if (theme.bio || config.subtitle) { %>
+  <p class="hero-bio"><%= theme.bio || config.subtitle %></p>
+  <% } %>
+  <p class="hero-meta">
+    <span><%= site.posts.length %> 篇</span>
+    <span class="sep">/</span>
+    <span>since <%= theme.since || 2026 %></span>
+    <span class="sep">/</span>
+    <a href="<%- url_for('/archives/') %>">归档</a>
+  </p>
+</section>
+
+<section class="list" aria-label="文章列表">
+  <div class="list-head">
+    <span><%= currentPage > 1 ? '第 ' + currentPage + ' 页' : '最新文章' %></span>
+    <span class="dim">按时间倒序</span>
+  </div>
+  <% page.posts.each(function(post, i) { %>
+    <%- partial('_partial/post-row', { post: post, index: i + 1 }) %>
+  <% }); %>
+  <% if (!page.posts.length) { %><p class="empty">暂无文章。</p><% } %>
+</section>
+
+<%- partial('_partial/pager') %>

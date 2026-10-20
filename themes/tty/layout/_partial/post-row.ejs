@@ -1,0 +1,28 @@
+<%
+/**
+ * 文章列表行
+ * 结构：序号 · 日期 · 标题 · 阅读时长 · 分类/标签
+ */
+var dateStr = post.date.format('YYYY-MM-DD');
+var dur = Math.max(1, Math.ceil(post.content.length / 500));
+var tags = post.tags.length ? post.tags.toArray().slice(0, 3) : [];
+var cats = post.categories.length ? post.categories.toArray() : [];
+%>
+<article class="row">
+  <span class="row-no" aria-hidden="true"><%= ('0' + (index || 1)).slice(-2) %></span>
+  <time class="row-date" datetime="<%= post.date.toISOString() %>"><%= dateStr %></time>
+  <div class="row-body">
+    <h2 class="row-title">
+      <a href="<%- url_for(post.path) %>"><%= post.title %></a>
+      <% if (post.pin) { %><span class="pin" title="置顶">*</span><% } %>
+    </h2>
+    <% if (post.excerpt) { %>
+      <p class="row-excerpt"><%- strip_html(post.excerpt).trim() %></p>
+    <% } %>
+    <div class="row-meta">
+      <% cats.forEach(function(c) { %><a class="chip cat" href="<%- url_for('/categories/' + c.name + '/') %>">#<%= c.name %></a><% }); %>
+      <% tags.forEach(function(t) { %><a class="chip" href="<%- url_for('/tags/' + t.name + '/') %>">:<%= t.name %></a><% }); %>
+      <span class="row-time"><%= dur %> min</span>
+    </div>
+  </div>
+</article>

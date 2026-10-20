@@ -1,0 +1,22 @@
+<%
+var isTag = page.tag !== undefined && page.tag !== null && page.layout !== 'category' && !page.category;
+var kind = page.category ? 'category' : 'tag';
+var name = page.category || page.tag || '';
+%>
+<section class="taxonomy">
+  <header class="post-head">
+    <nav class="crumbs">
+      <a href="<%- url_for('/') %>">~</a><span class="sep">/</span>
+      <a href="<%- url_for('/' + (kind === 'tag' ? 'tags' : 'categories') + '/') %>"><%= kind %></a><span class="sep">/</span>
+      <span class="cur"><%= name %></span>
+    </nav>
+    <h1 class="post-title"><%= kind === 'tag' ? ':' : '#' %><%= name %></h1>
+    <p class="page-desc"><span class="num"><%= page.posts.length %></span> 篇</p>
+  </header>
+  <section class="list">
+  <% page.posts.each(function(post, i) { %>
+    <%- partial('_partial/post-row', { post: post, index: i + 1 }) %>
+  <% }); %>
+  <% if (!page.posts.length) { %><p class="empty">这里还是空的。</p><% } %>
+  </section>
+</section>

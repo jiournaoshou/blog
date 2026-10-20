@@ -1,0 +1,114 @@
+/* 极简 highlight.js 配色 —— 只取五个色，跟终端 ANSI 调色板对齐
+ * Hexo 默认的 highlight.js 渲染器 class 前缀为空，所以规则不加 .hljs 限定 */
+.hljs { display: block; overflow-x: auto; }
+pre code.hljs { padding: 0; }
+
+/* 基础色统一到主题正文色（只作用在 pre 自身，别覆盖 span 上的语义色） */
+figure.highlight .code pre { color: var(--c-text, #c8ccc9) !important; }
+
+/* 注释 / 引用 */
+span.hljs-comment,
+span.hljs-quote { color: #545b57; font-style: italic; }
+
+/* 关键字 / 类型 */
+span.hljs-keyword,
+span.hljs-selector-tag,
+span.hljs-literal,
+span.hljs-section,
+span.hljs-doctag,
+span.hljs-type { color: #7ec8e3; }
+
+/* 字符串 / 正则 */
+span.hljs-string,
+span.hljs-regexp,
+span.hljs-addition,
+span.hljs-attribute,
+span.hljs-meta .hljs-string,
+span.hljs-string .hljs-subst { color: #9ecb7f; }
+
+/* 数字 / 变量 / 符号 */
+span.hljs-number,
+span.hljs-symbol,
+span.hljs-bullet,
+span.hljs-link,
+span.hljs-variable,
+span.hljs-template-variable { color: #d9a441; }
+
+/* 函数名 / 标签 / 选择器 */
+span.hljs-title,
+span.hljs-title.function_,
+span.hljs-name,
+span.hljs-selector-id,
+span.hljs-selector-class { color: #3ddc84; }
+
+/* 内建 / 类名 */
+span.hljs-built_in,
+span.hljs-class .hljs-title { color: #c99bdd; }
+
+/* 属性 / 参数 */
+span.hljs-attr,
+span.hljs-property,
+span.hljs-params { color: #c8ccc9; }
+
+/* 预处理指令 / 标签括号 */
+span.hljs-meta,
+span.hljs-tag { color: #7d8481; }
+span.hljs-tag .hljs-name { color: #3ddc84; }
+
+/* diff 删除行 */
+span.hljs-deletion { color: #e06767; }
+
+span.hljs-emphasis { font-style: italic; }
+span.hljs-strong { font-weight: 700; }
+
+/* 常见语言的补充：JSON 的键、YAML 的键值、Shell 变量 */
+span.hljs-punctuation { color: #7d8481; }
+span.hljs-subst { color: #c8ccc9; }
+span.hljs-formula { color: #c99bdd; }
+
+/* ─────────────────────────────────────────────────────────────
+   补充：Hexo 默认的 highlight.js 渲染器输出的是「裸类名」
+   （class 前缀为空，span.comment / span.string ...），
+   这一组规则让这些语义色同样生效。
+   ───────────────────────────────────────────────────────────── */
+figure.highlight span.comment,
+figure.highlight span.quote { color: #545b57; font-style: italic; }
+
+figure.highlight span.keyword,
+figure.highlight span.selector-tag,
+figure.highlight span.literal,
+figure.highlight span.section,
+figure.highlight span.doctag,
+figure.highlight span.type { color: #7ec8e3; }
+
+figure.highlight span.string,
+figure.highlight span.regexp,
+figure.highlight span.addition,
+figure.highlight span.attribute,
+figure.highlight span.template-string { color: #9ecb7f; }
+
+figure.highlight span.number,
+figure.highlight span.symbol,
+figure.highlight span.bullet,
+figure.highlight span.link,
+figure.highlight span.variable,
+figure.highlight span.template-variable { color: #d9a441; }
+
+figure.highlight span.title,
+figure.highlight span.name,
+figure.highlight span.selector-id,
+figure.highlight span.selector-class { color: #3ddc84; }
+
+figure.highlight span.built_in,
+figure.highlight span.class > .hljs-title { color: #c99bdd; }
+
+figure.highlight span.attr,
+figure.highlight span.property,
+figure.highlight span.params { color: #c8ccc9; }
+
+figure.highlight span.meta,
+figure.highlight span.tag { color: #7d8481; }
+
+figure.highlight span.deletion { color: #e06767; }
+figure.highlight span.punctuation { color: #7d8481; }
+figure.highlight span.subst { color: #c8ccc9; }

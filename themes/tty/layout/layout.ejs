@@ -12,7 +12,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><%= page.title ? page.title + ' · ' + config.title : config.title + (config.subtitle ? ' · ' + config.subtitle : '') %></title>
-  <%- meta_generator() %>
+  <% if (config.meta_generator) { %><%- meta_generator() %><% } %>
   <% if (page.description || config.description) { %>
   <meta name="description" content="<%= page.description || config.description %>">
   <% } %>
@@ -76,7 +76,7 @@
       <% if (theme.footer_text) { %><span class="foot-note"><%= theme.footer_text %></span><% } %>
     </div>
     <div class="foot-row dim">
-      <span><%- config.title %> · 由 Hexo 生成<%- theme.icp ? ' · <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">' + theme.icp + '</a>' : '' %></span>
+      <span><%- config.title %><%- theme.icp ? ' · <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">' + theme.icp + '</a>' : '' %></span>
       <span>build <time datetime="<%= new Date().toISOString() %>"><%= new Date().toISOString().slice(0, 10) %></time></span>
     </div>
   </footer>

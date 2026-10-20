@@ -34,6 +34,13 @@ menu:
   标签: /tags/
   关于: /about/
 
+# ── 友情链接 ──────────────────────────────────
+# 显示在页脚。name 显示文字，url 链接，desc 简短说明（可省略）
+links:
+  - name: "jiou 的小窝"
+    url: "https://jiouword-home.netlify.app/"
+    desc: "班会与团日活动记录表生成器"
+
 # ── 页脚 ──────────────────────────────────────
 footer_text: ""       # 留空则不显示
 since: 2024

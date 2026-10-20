@@ -59,6 +59,18 @@
   </main>
 
   <footer class="site-foot">
+    <% var links = theme.links || []; if (links.length) { %>
+    <div class="foot-links">
+      <span class="foot-links-label">友情链接</span>
+      <ul>
+        <% links.forEach(function(l) { %>
+        <li>
+          <a href="<%= l.url %>" target="_blank" rel="noopener noreferrer"><%= l.name %></a><% if (l.desc) { %><span class="link-desc"><%= l.desc %></span><% } %>
+        </li>
+        <% }); %>
+      </ul>
+    </div>
+    <% } %>
     <div class="foot-row">
       <span class="foot-cmd"><span class="ps1"><%= theme.prompt || '~' %>$</span> echo "© <%= theme.since || 2026 %>-<%= new Date().getFullYear() %> <%- theme.author || config.author || config.title %>"</span>
       <% if (theme.footer_text) { %><span class="foot-note"><%= theme.footer_text %></span><% } %>

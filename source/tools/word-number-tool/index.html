@@ -861,6 +861,7 @@ $("findText").addEventListener("input", () => runFind(true));
 $("findText").addEventListener("keydown", (e) => { if (e.key === "Enter") findNext(); });
 $("looseMatch").addEventListener("change", () => runFind(true));
 $("btnUndo").addEventListener("click", undo);
+$("btnExport").addEventListener("click", exportDocx);
 
 $("btnNew").addEventListener("click", () => {
   if (state.edits.size && !confirm("还有未导出的修改，确实要换一个文件吗？")) return;

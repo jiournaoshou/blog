@@ -1,6 +1,7 @@
 ---
 title: Word 数字查找与修改
 layout: page
+permalink: tools/word-number/index.html
 description: 把 .docx 拖进浏览器，点黄色底数字就能就地改，导出的文档除了数字之外一个字节都不动。
 ---
 

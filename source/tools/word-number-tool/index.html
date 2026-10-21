@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Word 数字查找与修改工具</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --panel: #ffffff;
+    --line: #e2e5ea;
+    --ink: #1f2328;
+    --muted: #6b7280;
+    --accent: #2563eb;
+    --accent-soft: #dbeafe;
+    --hit: #fde68a;
+    --hit-line: #d97706;
+    --changed: #bbf7d0;
+    --changed-line: #16a34a;
+    --current: #fca5a5;
+    --current-line: #dc2626;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font: 14px/1.6 "Microsoft YaHei", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+  }
+  .app { display: flex; flex-direction: column; height: 100vh; }
+
+  header.top {
+    display: flex; align-items: center; gap: 16px;
+    padding: 12px 20px; background: var(--panel); border-bottom: 1px solid var(--line);
+    flex: 0 0 auto;
+  }
+  header.top h1 { font-size: 16px; margin: 0; font-weight: 700; white-space: nowrap; }
+  header.top .sub { color: var(--muted); font-size: 12px; white-space: nowrap; }
+  .grow { flex: 1 1 auto; }
+
+  button {
+    font: inherit; cursor: pointer; border: 1px solid var(--line); background: #fff;
+    border-radius: 8px; padding: 7px 14px; color: var(--ink); transition: .15s;
+  }
+  button:hover:not(:disabled) { border-color: #c3c9d4; background: #fafbfc; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.primary:hover:not(:disabled) { background: #1d4ed8; border-color: #1d4ed8; }
+  button.ghost { border-color: transparent; background: transparent; }
+  button.ghost:hover:not(:disabled) { background: #f1f3f6; }
+
+  .drop {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    padding: 32px; overflow: auto;
+  }
+  .drop-inner {
+    background: var(--panel); border: 2px dashed #cfd5df; border-radius: 16px;
+    padding: 48px 56px; text-align: center; max-width: 620px; width: 100%;
+    transition: .15s;
+  }
+  .drop-inner.over { border-color: var(--accent); background: #f0f6ff; }
+  .drop-inner h2 { margin: 0 0 8px; font-size: 18px; }
+  .drop-inner p { color: var(--muted); margin: 0 0 20px; font-size: 13px; }
+  .drop-inner .big { font-size: 40px; line-height: 1; margin-bottom: 12px; }
+
+  .main { flex: 1; display: flex; min-height: 0; }
+
+  aside.tools {
+    width: 320px; flex: 0 0 320px; background: var(--panel); border-right: 1px solid var(--line);
+    overflow: auto; padding: 16px; display: flex; flex-direction: column; gap: 16px;
+  }
+  aside.tools section { border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; }
+  aside.tools h3 {
+    margin: 0 0 10px; font-size: 13px; text-transform: uppercase;
+    letter-spacing: .04em; color: var(--muted); font-weight: 700;
+  }
+  .row { display: flex; gap: 8px; align-items: center; }
+  .row + .row { margin-top: 8px; }
+  input[type=text], input[type=number] {
+    font: inherit; width: 100%; padding: 7px 10px; border: 1px solid var(--line);
+    border-radius: 8px; background: #fff; color: var(--ink); outline: none;
+  }
+  input[type=text]:focus, input[type=number]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .stat { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; }
+  .stat b { font-variant-numeric: tabular-nums; }
+  .hint { color: var(--muted); font-size: 12px; line-height: 1.5; }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; color: var(--muted); }
+  .legend span::before {
+    content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px;
+    margin-right: 5px; vertical-align: middle;
+  }
+  .legend .l-hit::before { background: var(--hit); }
+  .legend .l-chg::before { background: var(--changed); }
+  .legend .l-cur::before { background: var(--current); }
+  .filechip {
+    font-size: 12px; color: var(--muted); background: #f1f3f6; border-radius: 6px;
+    padding: 6px 9px; word-break: break-all;
+  }
+
+  main.view {
+    flex: 1; min-width: 0; overflow: auto; padding: 24px; display: flex;
+    flex-direction: column; align-items: center; gap: 12px;
+  }
+  .notice {
+    max-width: 820px; width: 100%; background: #fff8e1; border: 1px solid #f3d27a;
+    color: #7a5b00; border-radius: 8px; padding: 8px 12px; font-size: 12.5px; display: none;
+  }
+  .page {
+    background: #fff; width: 820px; max-width: 100%; padding: 48px 56px;
+    box-shadow: 0 1px 3px rgba(16,24,40,.08), 0 8px 24px rgba(16,24,40,.06);
+    border-radius: 4px; font-size: 15px; line-height: 1.9;
+  }
+  .page .doc-p { margin: 0 0 8px; word-break: break-word; }
+  .page .doc-p.center { text-align: center; }
+
+  .num {
+    border-radius: 3px; padding: 0 1px; cursor: pointer; transition: background .12s;
+  }
+  .num.hit { background: var(--hit); box-shadow: inset 0 -2px 0 var(--hit-line); }
+  .num.changed { background: var(--changed); box-shadow: inset 0 -2px 0 var(--changed-line); }
+  .num.current { background: var(--current); box-shadow: inset 0 -2px 0 var(--current-line); }
+  .num:hover { outline: 2px solid var(--accent); outline-offset: 0; }
+
+  .editing {
+    font: inherit; padding: 0 4px; border: 1px solid var(--accent); border-radius: 4px;
+    background: #fff; color: var(--ink); text-align: center; outline: none;
+    box-shadow: 0 0 0 3px var(--accent-soft); min-width: 48px;
+  }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px);
+    background: #111827; color: #fff; padding: 10px 18px; border-radius: 999px;
+    font-size: 13px; opacity: 0; pointer-events: none; transition: .2s; z-index: 50;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 860px) {
+    .main { flex-direction: column; }
+    aside.tools { width: auto; flex: none; border-right: 0; border-bottom: 1px solid var(--line); }
+    .page { padding: 24px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <h1>Word 数字查找与修改</h1>
+    <span class="sub">上传 .docx · 点数字即可改 · 可批量替换 · 改完原文件不变式导出</span>
+    <span class="grow"></span>
+    <button id="btnNew" class="ghost" disabled>重新上传</button>
+    <button id="btnUndo" disabled>撤销</button>
+    <button id="btnExport" class="primary" disabled>导出 .docx</button>
+  </header>
+
+  <div class="drop" id="drop">
+    <div class="drop-inner" id="dropInner">
+      <div class="big">📄</div>
+      <h2>把 Word 文档拖到这里</h2>
+      <p>支持 .docx（Word 2007 及以上）。文件只在本机浏览器里处理，不会上传到任何服务器。</p>
+      <button class="primary" id="btnPick">选择文件</button>
+      <input type="file" id="fileInput" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
+    </div>
+  </div>
+
+  <div class="main" id="main" style="display:none">
+    <aside class="tools">
+      <section>
+        <h3>当前文件</h3>
+        <div class="filechip" id="fileName">—</div>
+        <div class="row" style="margin-top:10px">
+          <div class="stat" style="flex:1"><span>数字个数</span><b id="statTotal">0</b></div>
+          <div class="stat" style="flex:1"><span>已修改</span><b id="statChanged">0</b></div>
+        </div>
+        <div class="legend" style="margin-top:8px">
+          <span class="l-hit">未改</span><span class="l-chg">已改</span><span class="l-cur">当前</span>
+        </div>
+      </section>
+
+      <section>
+        <h3>批量查找替换</h3>
+        <div class="row"><input type="text" id="findText" placeholder="查找，如 41"></div>
+        <div class="row"><input type="text" id="replaceText" placeholder="替换为，如 36"></div>
+        <div class="row">
+          <button class="primary" id="btnReplaceAll" style="flex:1">全部替换</button>
+          <button id="btnFindNext" title="定位下一个">找下一个</button>
+        </div>
+        <p class="hint" id="findHint" style="margin:8px 0 0"></p>
+      </section>
+
+      <section>
+        <h3>已修改记录</h3>
+        <div id="changes" class="hint">还没有修改。</div>
+      </section>
+
+      <section>
+        <h3>使用说明</h3>
+        <p class="hint">
+          1. 文档中的数字会以黄色底标出，点击即可就地修改，回车确认、Esc 取消。<br>
+          2. 「批量替换」按<b>完整数字</b>匹配，41 不会误伤 411、2024。勾选下方选项可改为包含匹配。<br>
+          3. 导出时只改动数字本身，原文档的字体、字号、表格边框、图片全部保持原样。
+        </p>
+        <div class="row">
+          <label style="display:flex;gap:6px;align-items:center;font-size:12.5px;color:#6b7280">
+            <input type="checkbox" id="looseMatch"> 包含匹配（不要求整段数字相同）
+          </label>
+        </div>
+      </section>
+    </aside>
+
+    <main class="view">
+      <div class="notice" id="notice"></div>
+      <div class="page" id="page"></div>
+    </main>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+/* ============================================================
+ * 一、极简 ZIP 读写（只依赖浏览器原生 DecompressionStream）
+ * ============================================================ */
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
+    t[n] = c >>> 0;
+  }
+  return t;
+})();
+
+function crc32(bytes) {
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+
+function u16(v) { return [v & 0xFF, (v >>> 8) & 0xFF]; }
+function u32(v) { return [v & 0xFF, (v >>> 8) & 0xFF, (v >>> 16) & 0xFF, (v >>> 24) & 0xFF]; }
+
+async function inflateRaw(bytes) {
+  if (typeof DecompressionStream === "undefined") {
+    throw new Error("当前浏览器不支持解压，请使用较新版本的 Chrome / Edge / Firefox。");
+  }
+  const ds = new DecompressionStream("deflate-raw");
+  const stream = new Blob([bytes]).stream().pipeThrough(ds);
+  const buf = await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+
+async function readZip(buffer) {
+  const view = new DataView(buffer);
+  const bytes = new Uint8Array(buffer);
+  // 从尾部找 End Of Central Directory
+  let eocd = -1;
+  for (let i = buffer.byteLength - 22; i >= Math.max(0, buffer.byteLength - 65557); i--) {
+    if (view.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  }
+  if (eocd < 0) throw new Error("这不是一个有效的 .docx / zip 文件。");
+
+  const count = view.getUint16(eocd + 10, true);
+  const cdOffset = view.getUint32(eocd + 16, true);
+  const decoder = new TextDecoder("utf-8");
+  const entries = [];
+  let p = cdOffset;
+
+  for (let i = 0; i < count; i++) {
+    if (view.getUint32(p, true) !== 0x02014b50) throw new Error("zip 中央目录损坏。");
+    const flags = view.getUint16(p + 8, true);
+    const method = view.getUint16(p + 10, true);
+    const compSize = view.getUint32(p + 20, true);
+    const nameLen = view.getUint16(p + 28, true);
+    const extraLen = view.getUint16(p + 30, true);
+    const commentLen = view.getUint16(p + 32, true);
+    const localOffset = view.getUint32(p + 42, true);
+    const name = decoder.decode(bytes.subarray(p + 46, p + 46 + nameLen));
+    entries.push({ name, method, compSize, localOffset, flags });
+    p += 46 + nameLen + extraLen + commentLen;
+  }
+  return { view, bytes, entries };
+}
+
+async function extractEntry(zip, entry) {
+  const { view, bytes } = zip;
+  const p = entry.localOffset;
+  if (view.getUint32(p, true) !== 0x04034b50) throw new Error("zip 本地头损坏：" + entry.name);
+  const nameLen = view.getUint16(p + 26, true);
+  const extraLen = view.getUint16(p + 28, true);
+  const start = p + 30 + nameLen + extraLen;
+  const raw = bytes.subarray(start, start + entry.compSize);
+  if (entry.method === 0) return raw;
+  if (entry.method === 8) return await inflateRaw(raw);
+  throw new Error("不支持的压缩方式：" + entry.method);
+}
+
+function writeZip(files) {
+  // files: [{ name, data: Uint8Array }]
+  const enc = new TextEncoder();
+  const chunks = [];
+  const central = [];
+  let offset = 0;
+
+  for (const f of files) {
+    const nameBytes = enc.encode(f.name);
+    const crc = crc32(f.data);
+    const size = f.data.length;
+    const local = new Uint8Array([
+      0x50, 0x4b, 0x03, 0x04, ...u16(20), ...u16(0x0800), ...u16(0),
+      ...u16(0), ...u16(0), ...u32(crc), ...u32(size), ...u32(size),
+      ...u16(nameBytes.length), ...u16(0)
+    ]);
+    chunks.push(local, nameBytes, f.data);
+
+    central.push(new Uint8Array([
+      0x50, 0x4b, 0x01, 0x02, ...u16(20), ...u16(20), ...u16(0x0800), ...u16(0),
+      ...u16(0), ...u16(0), ...u32(crc), ...u32(size), ...u32(size),
+      ...u16(nameBytes.length), ...u16(0), ...u16(0), ...u16(0), ...u16(0),
+      ...u32(0), ...u32(offset)
+    ]), nameBytes);
+    offset += local.length + nameBytes.length + size;
+  }
+
+  const centralSize = central.reduce((s, c) => s + c.length, 0);
+  const end = new Uint8Array([
+    0x50, 0x4b, 0x05, 0x06, ...u16(0), ...u16(0),
+    ...u16(files.length), ...u16(files.length),
+    ...u32(centralSize), ...u32(offset), ...u16(0)
+  ]);
+  return new Blob([...chunks, ...central, end], {
+    type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  });
+}
+
+/* ============================================================
+ * 二、docx 解析：段落 / 表格的显示文本，以及文本节点映射
+ * ============================================================ */
+const W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+const RX_NUMBER = /\d+(?:[.,:：／/．·\-–—]\d+)*/g;
+
+function makeMapper(xml) {
+  // 解析后按出现顺序收集所有文本节点（<w:t> 与 <w:instrText>）
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(xml, "application/xml");
+  const pErr = doc.getElementsByTagName("parsererror");
+  if (pErr && pErr.length) throw new Error("document.xml 解析失败。");
+
+  const nodes = [];
+  const walker = doc.createTreeWalker(doc.documentElement, NodeFilter.SHOW_ELEMENT);
+  let n = walker.currentNode;
+  while (n) {
+    if (n.namespaceURI === W_NS && (n.localName === "t" || n.localName === "instrText")) {
+      nodes.push(n);
+    }
+    n = walker.nextNode();
+  }
+
+  const starts = [];
+  let total = 0;
+  for (const el of nodes) {
+    const len = (el.textContent || "").length;
+    starts.push(total);
+    total += len;
+  }
+
+  function textOf(el) { return el.textContent || ""; }
+
+  // 用 charStart 定位节点内的索引
+  function nodeAt(charStart) {
+    let lo = 0, hi = starts.length - 1, ans = -1;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      if (starts[mid] <= charStart) { ans = mid; lo = mid + 1; } else { hi = mid - 1; }
+    }
+    return ans;
+  }
+
+  function spanToOffsets(spanStart) {
+    const i = nodeAt(spanStart);
+    return { i, offset: spanStart - starts[i] };
+  }
+
+  function serialize() {
+    return new XMLSerializer().serializeToString(doc);
+  }
+
+  return { doc, nodes, starts, total, nodeAt, spanToOffsets, textOf, serialize };
+}
+
+/** 把块级元素（w:p）转成结构化视图，同时保持与 mapper 的文本顺序一致 */
+function buildView(mapper, W) {
+  const blocks = [];
+  // 只取正文与表格内的段落，按文档顺序
+  const all = mapper.doc.getElementsByTagNameNS(W_NS, "p");
+  const list = [];
+  for (let i = 0; i < all.length; i++) list.push(all[i]);
+
+  // 建立：文本节点 -> 全局序号；文本节点 -> 所属最近段落
+  const globalIndex = new Map();
+  mapper.nodes.forEach((el, idx) => { globalIndex.set(el, idx); });
+
+  const owner = new Map();
+  const docEl = mapper.doc.documentElement;
+  const walker = mapper.doc.createTreeWalker(docEl, NodeFilter.SHOW_ELEMENT);
+  let cur = walker.currentNode;
+  while (cur) {
+    if (cur.namespaceURI === W_NS && (cur.localName === "t" || cur.localName === "instrText")) {
+      let a = cur.parentNode;
+      while (a && !(a.namespaceURI === W_NS && a.localName === "p")) a = a.parentNode;
+      if (a) owner.set(cur, a);
+    }
+    cur = walker.nextNode();
+  }
+
+  // 段落的文本起始位置 = 该段第一个文本节点的全局起点
+  const paraFirstNode = new Map();
+  for (const [el, p] of owner) {
+    if (!paraFirstNode.has(p)) paraFirstNode.set(p, globalIndex.get(el));
+  }
+
+  for (const p of list) {
+    if (!owner.size) break;
+    const first = paraFirstNode.get(p);
+    if (first === undefined) continue;
+    // 收集该段内的文本节点
+    const tNodes = [];
+    for (const [el, pp] of owner) if (pp === p) tNodes.push(el);
+    tNodes.sort((a, b) => globalIndex.get(a) - globalIndex.get(b));
+
+    const parts = [];
+    let localCursor = 0;
+    for (const el of tNodes) {
+      const gIdx = globalIndex.get(el);
+      const gStart = mapper.starts[gIdx];
+      const txt = el.textContent || "";
+      RX_NUMBER.lastIndex = 0;
+      let dm;
+      // 注意：不要用 m.index —— 本地变量名为 index 时会被当成正则属性而取值错误
+      while ((dm = RX_NUMBER.exec(txt)) !== null) {
+        const at = dm.index;
+        parts.push({ type: "text", text: txt.slice(localCursor, at) });
+        parts.push({
+          type: "num",
+          text: dm[0],
+          nodeIndex: gIdx,
+          offset: at,
+          globalStart: gStart + at
+        });
+        localCursor = at + dm[0].length;
+        if (dm[0].length === 0) RX_NUMBER.lastIndex++;
+      }
+      parts.push({ type: "text", text: txt.slice(localCursor) });
+      localCursor = 0;
+    }
+
+    // 段落对齐
+    const pPr = Array.from(p.childNodes).find(c => c.nodeType === 1 && c.localName === "pPr");
+    let center = false;
+    if (pPr) {
+      const jc = Array.from(pPr.childNodes).find(c => c.nodeType === 1 && c.localName === "jc");
+      if (jc) {
+        const v = jc.getAttributeNS(W_NS, "val") || jc.getAttribute("w:val");
+        center = v === "center";
+      }
+    }
+    blocks.push({ parts, center });
+  }
+  return blocks;
+}
+
+/* ============================================================
+ * 三、应用编辑：拼接文本后一次性写回
+ * ============================================================ */
+function applyEdits(mapper, edits) {
+  // edits: Map<"nodeIndex:offset", {oldText,newText}>
+  if (!edits.size) return false;
+  const perNode = new Map();
+  for (const [key, val] of edits) {
+    const [iStr, offStr] = key.split(":");
+    const nodeIdx = +iStr, off = +offStr;
+    if (!perNode.has(nodeIdx)) perNode.set(nodeIdx, []);
+    perNode.get(nodeIdx).push({ off, oldLen: val.oldText.length, oldText: val.oldText, newText: val.newText });
+  }
+  let touched = false;
+  for (const [nodeIdx, list] of perNode) {
+    const el = mapper.nodes[nodeIdx];
+    if (!el) continue;
+    let txt = el.textContent || "";
+    list.sort((a, b) => b.off - a.off);
+    for (const e of list) {
+      if (txt.slice(e.off, e.off + e.oldLen) !== e.oldText) continue;
+      txt = txt.slice(0, e.off) + e.newText + txt.slice(e.off + e.oldLen);
+      touched = true;
+    }
+    while (el.firstChild) el.removeChild(el.firstChild);
+    el.appendChild(mapper.doc.createTextNode(txt));
+    if (/^\s|\s$/.test(txt)) {
+      el.setAttributeNS("http://www.w3.org/XML/1998/namespace", "xml:space", "preserve");
+    }
+  }
+  return touched;
+}
+
+/* ============================================================
+ * 四、界面逻辑
+ * ============================================================ */
+const $ = (id) => document.getElementById(id);
+const state = {
+  fileName: "",
+  zipFiles: null,          // [{name, data}]
+  docXml: "",
+  mapper: null,
+  blocks: [],
+  edits: new Map(),        // 原始坐标 -> 编辑
+  history: [],             // 撤销栈
+  numbers: [],             // 展示用（含当前位置的已编辑文本）
+  findMatches: [],
+  findIndex: -1,
+  currentEl: null
+};
+
+function toast(msg) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove("show"), 1800);
+}
+
+function currentText(block, num) {
+  const key = num.nodeIndex + ":" + num.offset;
+  const e = state.edits.get(key);
+  return e ? e.newText : num.text;
+}
+
+function rebuild(mapper, keepScroll) {
+  const page = $("page");
+  const scroll = keepScroll ? page.parentElement.scrollTop : 0;
+  page.innerHTML = "";
+  state.numbers = [];
+
+  const nodes = mapper.nodes;
+  state.blocks.forEach((block, bi) => {
+    const p = document.createElement("div");
+    p.className = "doc-p" + (block.center ? " center" : "");
+    let counter = 0;
+    for (const part of block.parts) {
+      if (part.type === "text") {
+        if (part.text) p.appendChild(document.createTextNode(part.text));
+        continue;
+      }
+      const key = part.nodeIndex + ":" + part.offset;
+      const ed = state.edits.get(key);
+      const span = document.createElement("span");
+      const shown = ed ? ed.newText : part.text;
+      span.className = "num " + (ed ? "changed" : "hit");
+      span.textContent = shown;
+      span.dataset.key = key;
+      span.title = ed ? `原值 ${ed.oldText} → ${ed.newText}（点击可继续修改）` : "点击修改";
+      span.tabIndex = 0;
+      p.appendChild(span);
+
+      state.numbers.push({
+        key,
+        el: span,
+        blockIndex: bi,
+        nodeIndex: part.nodeIndex,
+        offset: part.offset,
+        original: part.text,
+        current: shown
+      });
+
+      // 数字之间的标点（例如 2026.10.12 的点）作为文本追加
+      part._pos = counter++;
+    }
+    page.appendChild(p);
+  });
+
+  updateStats();
+  if (keepScroll) page.parentElement.scrollTop = scroll;
+}
+
+function updateStats() {
+  $("statTotal").textContent = state.numbers.length;
+  $("statChanged").textContent = state.edits.size;
+  $("btnExport").disabled = state.numbers.length === 0;
+  renderChanges();
+}
+
+function renderChanges() {
+  const box = $("changes");
+  if (!state.edits.size) { box.innerHTML = "还没有修改。"; return; }
+  const lines = [];
+  for (const [k, e] of state.edits) {
+    lines.push(`<div class="stat"><span><code>${escapeHtml(e.oldText)}</code> → <b>${escapeHtml(e.newText)}</b></span>
+      <button class="ghost" data-undo="${k}" style="padding:2px 8px;font-size:12px">撤销</button></div>`);
+  }
+  box.innerHTML = lines.join("");
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+/* ---------- 就地编辑 ---------- */
+function startEdit(span) {
+  if (span.querySelector("input")) return;
+  const item = state.numbers.find(n => n.el === span);
+  if (!item) return;
+  const input = document.createElement("input");
+  input.type = "text";
+  input.value = item.current;
+  input.className = "editing";
+  input.style.width = Math.max(48, (item.current.length + 2) * 10) + "px";
+  span.textContent = "";
+  span.appendChild(input);
+  input.focus();
+  input.select();
+
+  const finish = (commit) => {
+    if (commit) {
+      const val = input.value.trim();
+      if (val === "") { toast("数字不能为空，已取消"); }
+      else if (val !== item.current) {
+        state.history.push({ type: "edit", key: item.key, before: state.edits.get(item.key) || null });
+        state.edits.set(item.key, { oldText: item.original, newText: val });
+        toast(`已改为 ${val}`);
+      }
+    }
+    rebuild(state.mapper, true);
+  };
+
+  input.addEventListener("keydown", (ev) => {
+    if (ev.key === "Enter") { ev.preventDefault(); finish(true); }
+    else if (ev.key === "Escape") { ev.preventDefault(); finish(false); }
+    ev.stopPropagation();
+  });
+  input.addEventListener("blur", () => finish(true), { once: true });
+}
+
+/* ---------- 查找替换 ---------- */
+function runFind(quiet) {
+  const q = $("findText").value.trim();
+  state.findMatches = [];
+  state.findIndex = -1;
+  clearCurrent();
+  if (!q) { $("findHint").textContent = ""; return; }
+  const loose = $("looseMatch").checked;
+  state.numbers.forEach((n, idx) => {
+    const ok = loose ? n.current.includes(q) : n.current === q;
+    if (ok) state.findMatches.push(idx);
+  });
+  if (!state.findMatches.length) {
+    $("findHint").textContent = `没有找到“${q}”。`;
+    return;
+  }
+  $("findHint").textContent = `共找到 ${state.findMatches.length} 处“${q}”。`;
+  if (!quiet) findNext();
+}
+
+function clearCurrent() {
+  if (state.currentEl) {
+    const it = state.numbers.find(n => n.el === state.currentEl);
+    if (it) state.currentEl.className = "num " + (state.edits.has(it.key) ? "changed" : "hit");
+  }
+  state.currentEl = null;
+}
+
+function findNext() {
+  const q = $("findText").value.trim();
+  if (!q) { toast("先输入要查找的数字"); return; }
+  if (!state.findMatches.length) runFind(true);
+  if (!state.findMatches.length) return;
+  clearCurrent();
+  state.findIndex = (state.findIndex + 1) % state.findMatches.length;
+  const item = state.numbers[state.findMatches[state.findIndex]];
+  item.el.scrollIntoView({ block: "center", behavior: "smooth" });
+  item.el.className = "num current";
+  state.currentEl = item.el;
+  $("findHint").textContent = `第 ${state.findIndex + 1} / ${state.findMatches.length} 处（共 ${state.findMatches.length} 处“${q}”）`;
+}
+
+function replaceAll() {
+  const q = $("findText").value.trim().replace(/^0+(?=\d)/, "");
+  const r = $("replaceText").value.trim();
+  if (!q) { toast("请先输入要查找的数字"); return; }
+  if (!r) { toast("请输入替换后的数字"); return; }
+
+  const loose = $("looseMatch").checked;
+  let count = 0;
+  const snapshot = new Map(state.edits);
+
+  // 每次替换后文本会变，所以按块重算；这里逐个判断当前文本
+  for (const n of state.numbers) {
+    const cur = currentText(n, { nodeIndex: n.nodeIndex, offset: n.offset, text: n.original }) ||
+                (state.edits.has(n.key) ? state.edits.get(n.key).newText : n.original);
+    const ok = loose ? cur.includes(q) : cur === q;
+    if (!ok) continue;
+    const newText = loose ? cur.split(q).join(r) : r;
+    state.edits.set(n.key, { oldText: n.original, newText });
+    count++;
+  }
+
+  if (!count) { toast(`没有找到“${q}”`); return; }
+  state.history.push({ type: "batch", before: snapshot });
+  rebuild(state.mapper, true);
+  runFind(true);
+  toast(`已替换 ${count} 处`);
+}
+
+/* ---------- 载入 ---------- */
+async function loadFile(file) {
+  try {
+    const buf = await file.arrayBuffer();
+    const zip = await readZip(buf);
+    const files = [];
+    for (const entry of zip.entries) {
+      if (entry.name.endsWith("/")) continue;
+      files.push({ name: entry.name, data: await extractEntry(zip, entry) });
+    }
+    const docFile = files.find(f => f.name === "word/document.xml");
+    if (!docFile) throw new Error("这个文件里没有 word/document.xml，可能不是 .docx。");
+
+    const dec = new TextDecoder("utf-8");
+    const xml = dec.decode(docFile.data);
+    const mapper = makeMapper(xml);
+    if (!mapper.nodes.length) throw new Error("没有解析到文字内容。");
+
+    const W = W_NS;
+    const blocks = buildView(mapper, W);
+
+    state.fileName = file.name;
+    state.zipFiles = files;
+    state.docXml = xml;
+    state.mapper = mapper;
+    state.blocks = blocks;
+    state.edits = new Map();
+    state.history = [];
+    state.findMatches = [];
+    state.findIndex = -1;
+    state.currentEl = null;
+
+    $("fileName").textContent = file.name;
+    $("drop").style.display = "none";
+    $("main").style.display = "flex";
+    $("btnNew").disabled = false;
+    $("btnUndo").disabled = true;
+    $("findText").value = "";
+    $("replaceText").value = "";
+    $("findHint").textContent = "";
+
+    rebuild(mapper, false);
+
+    const notice = $("notice");
+    const probs = [];
+    if (mapper.nodes.length !== blocks.reduce((s, b) => s + b.parts.filter(p => p.type === "num").length, 0) + 0) {
+      // 提示：部分数字位于页眉页脚等位置，正文中不显示
+    }
+    if (/\{/.test(xml) && /INCLUDETEXT|IF /.test(xml)) {
+      probs.push("文档里有域代码，替换域计算结果可能会在 Word 中重新计算。");
+    }
+    if (probs.length) { notice.textContent = "提示：" + probs.join(" "); notice.style.display = "block"; }
+    else notice.style.display = "none";
+
+    toast(`已载入，共找到 ${state.numbers.length} 个数字`);
+  } catch (err) {
+    console.error(err);
+    alert("载入失败：" + err.message);
+  }
+}
+
+/* ---------- 撤销 ---------- */
+function undo() {
+  if (!state.history.length) { toast("没有可撤销的操作"); return; }
+  const last = state.history.pop();
+  if (last.type === "edit") {
+    if (last.before) state.edits.set(last.key, last.before);
+    else state.edits.delete(last.key);
+  } else if (last.type === "batch") {
+    state.edits = last.before;
+  }
+  rebuild(state.mapper, true);
+  $("btnUndo").disabled = state.history.length === 0;
+  toast("已撤销");
+}
+
+/* ---------- 导出 ---------- */
+async function exportDocx() {
+  if (!state.zipFiles) return;
+  try {
+    const docFile = state.zipFiles.find(f => f.name === "word/document.xml");
+    const xml = state.docXml;
+    // 每次都从原始 XML 重新解析，保证坐标稳定
+    const mapper = makeMapper(xml);
+    const ok = applyEdits(mapper, state.edits);
+    const outXml = mapper.serialize();
+    docFile.data = new TextEncoder().encode(outXml);
+
+    const blob = writeZip(state.zipFiles);
+    const base = state.fileName.replace(/\.docx$/i, "");
+    const name = `${base}（已修改）.docx`;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    toast(ok ? "已导出，打开检查一下再保存" : "内容未变化，仍导出副本");
+  } catch (err) {
+    console.error(err);
+    alert("导出失败：" + err.message);
+  }
+}
+
+/* ---------- 事件绑定 ---------- */
+$("btnPick").addEventListener("click", () => $("fileInput").click());
+$("fileInput").addEventListener("change", (e) => {
+  const f = e.target.files && e.target.files[0];
+  if (f) loadFile(f);
+  e.target.value = "";
+});
+
+const drop = $("drop");
+const dropInner = $("dropInner");
+["dragenter", "dragover"].forEach(ev => dropInner.addEventListener(ev, (e) => {
+  e.preventDefault(); dropInner.classList.add("over");
+}));
+["dragleave", "drop"].forEach(ev => dropInner.addEventListener(ev, (e) => {
+  e.preventDefault(); dropInner.classList.remove("over");
+}));
+dropInner.addEventListener("drop", (e) => {
+  const f = e.dataTransfer.files && e.dataTransfer.files[0];
+  if (f) loadFile(f);
+});
+
+$("main").addEventListener("dragover", (e) => e.preventDefault());
+$("main").addEventListener("drop", (e) => {
+  e.preventDefault();
+  const f = e.dataTransfer.files && e.dataTransfer.files[0];
+  if (f) loadFile(f);
+});
+
+$("page").addEventListener("click", (e) => {
+  const span = e.target.closest(".num");
+  if (span) startEdit(span);
+});
+$("page").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && e.target.classList && e.target.classList.contains("num")) {
+    e.preventDefault();
+    startEdit(e.target);
+  }
+});
+
+$("btnReplaceAll").addEventListener("click", replaceAll);
+$("btnFindNext").addEventListener("click", findNext);
+$("findText").addEventListener("input", () => runFind(true));
+$("findText").addEventListener("keydown", (e) => { if (e.key === "Enter") findNext(); });
+$("looseMatch").addEventListener("change", () => runFind(true));
+$("btnUndo").addEventListener("click", undo);
+
+$("btnNew").addEventListener("click", () => {
+  if (state.edits.size && !confirm("还有未导出的修改，确实要换一个文件吗？")) return;
+  state.zipFiles = null; state.edits = new Map(); state.history = [];
+  $("main").style.display = "none";
+  $("drop").style.display = "flex";
+  $("btnNew").disabled = true;
+  $("btnUndo").disabled = true;
+  $("btnExport").disabled = true;
+});
+
+$("changes").addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-undo]");
+  if (!btn) return;
+  const key = btn.dataset.undo;
+  const before = state.edits.get(key);
+  if (!before) return;
+  state.history.push({ type: "edit", key, before });
+  state.edits.delete(key);
+  rebuild(state.mapper, true);
+  $("btnUndo").disabled = false;
+});
+</script>
+</body>
+</html>

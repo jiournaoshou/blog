@@ -29,8 +29,10 @@ typewriter: false        # 首页打字机效果
 cursor_blink: true
 
 # ── 导航 ──────────────────────────────────────
+# 友情链接里如果也想放工具，直接在 links 里加一条即可
 menu:
   文章: /archives/
+  工具: /tools/word-number/
   标签: /tags/
   关于: /about/
 

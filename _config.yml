@@ -32,6 +32,7 @@ skip_render:
   - "*.txt"
   # 附属工具页：原样输出，不走 Markdown/EJS 渲染
   - "tools/word-number-tool/**"
+  - "tools/kemu1-tool/**"
 
 # ── 写作 ─────────────────────────────────────────
 new_post_name: :year-:month-:day-:title.md

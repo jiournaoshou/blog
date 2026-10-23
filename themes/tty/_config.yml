@@ -32,7 +32,7 @@ cursor_blink: true
 # 友情链接里如果也想放工具，直接在 links 里加一条即可
 menu:
   文章: /archives/
-  工具: /tools/word-number/
+  工具: /tools/
   标签: /tags/
   关于: /about/
 

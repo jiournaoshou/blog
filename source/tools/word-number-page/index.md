@@ -60,7 +60,7 @@ docx 里每个 run 都带一段 `<w:rPr>`，写着它的字体、字号、颜色
 改论文的页码、批量订正编号、修正日期……任何「格式已经调好、只有数字写错了」的场合，用它比在 Word 里小心翼翼地替换安全得多。
 
 <div class="tool-back">
-  <a href="/blog/">← 返回首页</a>
+  <a href="/blog/tools/">← 返回工具列表</a> · <a href="/blog/">返回首页</a>
 </div>
 
 <style>

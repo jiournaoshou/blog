@@ -40,3 +40,13 @@ $ ./kemu1 --help
 ## 快捷键
 
 `A` / `B` / `C` / `D` 选择，`Enter` 提交或进入下一题，`←` / `→` 翻页。
+
+<div class="tool-back">
+  <a href="/blog/tools/">← 返回工具列表</a> · <a href="/blog/">返回首页</a>
+</div>
+
+<style>
+.tool-back { margin-top: 3em; font-size: 13px; }
+.tool-back a { color: var(--c-text-mute); }
+.tool-back a:hover { color: var(--c-accent); }
+</style>
